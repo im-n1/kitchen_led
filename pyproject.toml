@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "kitchen_led"
+version = "0.1.0"
+description = ""
+authors = ["n1 <hrdina.pavel@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+esptool = "^3.1"
+rshell = "^0.0.30"
+adafruit-ampy = "^1.1.0"
+
+[tool.poetry.dev-dependencies]
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
