@@ -1,0 +1,6 @@
+{
+    "mqtt_topic_in": "home/living_room/curtain_led/in",
+    "mqtt_topic_out": "home/living_room/curtain_led/out",
+    "mqtt_topic_log": "home/living_room/curtain_led/logs",
+    "mqtt_topic_offline": "home/living_room/curtain_led/offline"
+}

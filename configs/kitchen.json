@@ -1,0 +1,6 @@
+{
+    "mqtt_topic_in": "home/kitchen/bottom_led/in",
+    "mqtt_topic_out": "home/kitchen/bottom_led/out",
+    "mqtt_topic_log": "home/kitchen/bottom_led/logs",
+    "mqtt_topic_offline": "home/kitchen/bottom_led/offline"
+}

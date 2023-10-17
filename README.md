@@ -1,9 +1,11 @@
 # Led kitchen
 
-## 0. Setup
+## Installation
+
+### 0. Setup
 `$ poetry install`
 
-## 1. Create custom firmware with embeded mqtt_as.py
+### 1. Create custom firmware with embeded mqtt_as.py
 1. Download `mqtt_as.py` file from [MicroPython MQTT](https://github.com/peterhinch/micropython-mqtt/tree/master/mqtt_as)
    and place it into current dir.
 2. `docker run --rm -it -v $HOME:$HOME -u $UID -w $PWD larsks/esp-open-sdk bash`
@@ -18,24 +20,28 @@ Compiled firmware is in `build-GENERIC/firmware-combined.bin` file. This is what
 be flashed to the chip. Copy to mounted volume `/home/...` (see $HOME in 1st command) for
 easy access to the host machine.
 
-## 2. Flash custom firmware to the chip
+### 2. Flash custom firmware to the chip
 
 1. download MicroPython [here](http://micropython.org/download/esp8266/)
 2. install `esptool.py` - `pip install esptool`
 3. run `scripts/reflash.sh` script
 
-## 3. Run REPL
+### 3. Run REPL
 `$ ./scripts/rshell.sh`
 
-## 4. Copy program to the chip
-`$ ./scripts/put.sh`
+### 4. Create config for a device in `configs` directory.
+1. `$ cp configs/kitchen.json configs/my_new_device.json`
+2. `$ vim configs/my_new_device.json`
 
-## 5. Get program logs
+### 4. Copy program to the chip
+`$ ./scripts/put.sh configs/my_new_device.json`
+
+### 5. Get program logs
 `$ ./scripts/get_log.sh`
 
 ## Miscellaneous
 
-### Flash firmware
+### Flashing firmware
 `$ su -c "esptool.py --port /dev/ttyUSB0 erase_flash ; esptool.py --port /dev/ttyUSB0 --baud 460800 write_flash --flash_size=detect 0 firmware-combined.bin"`
 
 ### Open RShell
@@ -68,3 +74,7 @@ $ su -c "esptool.py --port /dev/ttyUSB0 chip_id"
 ```
 $ su -c "ampy --port /dev/ttyUSB0 ls"
 ```
+
+<div align="center">
+    <img src="https://gitlab.com/imn1/nodemcu-leds/-/raw/master/scheme.png">
+</div>

@@ -6,7 +6,7 @@ from machine import PWM, Pin
 from mqtt_as import MQTTClient
 from mqtt_as import config as mqtt_config
 
-DEBUG = True
+DEBUG = False
 
 WIFI_SSID = "n1.home.slow"
 WIFI_PASSWORD = "polibmiprdel"
@@ -14,10 +14,6 @@ WIFI_PASSWORD = "polibmiprdel"
 MQTT_HOST = "o2.home"
 MQTT_USER = ""
 MQTT_PASSWORD = ""
-MQTT_TOPIC_IN = "home/kitchen/bottom_led/in"
-MQTT_TOPIC_OUT = "home/kitchen/bottom_led/out"
-MQTT_TOPIC_LOG = "home/kitchen/bottom_led/logs"
-MQTT_TOPIC_OFFLINE = "home/kitchen/bottom_led/offline"
 MQTT_OFFLINE_MESSAGE = "0"
 MQTT_RETAIN = True
 MQTT_QOS = 1
@@ -26,7 +22,6 @@ MQTT_QOS = 1
 MAX_DUTY = 1023
 MAX_FREQUENCY = 1000
 
-# TODO: zjistit. k cemu se realne pouziva a pripadne prejmenovat
 KEEPALIVE = 10
 
 R_PIN = 14  # D5 on the board
@@ -44,8 +39,16 @@ def log(message):
     :param str message: A message to log.
     """
 
-    # with open("log", "a") as f:
-    #     f.write(f"{message}\n")
+    if not DEBUG:
+        return
+
+    with open("log", "a") as f:
+        f.write(f"{message}\n")
+
+
+def get_config():
+    with open("config.json", "r") as f:
+        return ujson.loads(f.read())
 
 
 class Mqtt:
@@ -70,7 +73,7 @@ class Mqtt:
         config["wifi_pw"] = WIFI_PASSWORD
         config["keepalive"] = KEEPALIVE
         config["will"] = [
-            MQTT_TOPIC_OFFLINE,  # cannot be same as MQTT_TOPIC
+            get_config()["mqtt_topic_offline"],  # cannot be same as MQTT_TOPIC
             MQTT_OFFLINE_MESSAGE,
             MQTT_RETAIN,
             MQTT_QOS,
@@ -87,14 +90,33 @@ class Mqtt:
         :param MQTTClient client: MQTT client instance.
         """
 
-        await client.subscribe(MQTT_TOPIC_IN, MQTT_QOS)
+        await client.subscribe(get_config()["mqtt_topic_in"], MQTT_QOS)
         await self.publish_strip_state()
 
     def on_message(self, topic, message, retained):
         """
+        MQTT callback when a message is received.
+
+        Message structure is:
+
         {
-            "device": ...,
-            "data": ...,
+          "brightness": 255,
+          "color_mode": "rgb",
+          "color_temp": 155,
+          "color": {
+            "r": 255,
+            "g": 180,
+            "b": 200,
+            "c": 100,
+            "w": 50,
+            "x": 0.406,
+            "y": 0.301,
+            "h": 344.0,
+            "s": 29.412
+          },
+          "effect": "colorloop",
+          "state": "ON",
+          "transition": 2,
         }
         """
 
@@ -123,7 +145,7 @@ class Mqtt:
         """
 
         await self.client.publish(
-            MQTT_TOPIC_OUT,
+            get_config()["mqtt_topic_out"],
             ujson.dumps(
                 {
                     "device": self.led_strip.name,
@@ -135,11 +157,9 @@ class Mqtt:
 
 
 class LEDStrip:
-
     name = "led_strip"
 
     def __init__(self, machine):
-
         self.machine = machine
         self.red_pin = PWM(Pin(R_PIN), freq=1000)
         self.green_pin = PWM(Pin(G_PIN), freq=1000)
@@ -163,7 +183,6 @@ class LEDStrip:
         return int(percs / 100 * MAX_DUTY)
 
     def value_to_duty(self, value):
-
         if 0 == value:
             to_return = 0
         else:
@@ -346,19 +365,16 @@ class Machine:
     """
 
     def __init__(self):
-
         self.logs = []
         open("log", "w").close()
 
     def run(self):
-
         try:
             uasyncio.run(self.start())
         finally:
             self.mqtt.close()
 
     def log(self, message):
-
         self.logs.append(message)
 
     async def start(self):
@@ -378,7 +394,6 @@ class Machine:
         """
 
         while True:
-
             try:
                 log("Connecting to MQTT...")
 
@@ -401,14 +416,15 @@ class Machine:
                 await uasyncio.sleep(15)
 
     async def flush_logs(self):
-
         while self.logs:
             try:
                 message = self.logs.pop()
             except IndexError:
                 break
 
-            await self.mqtt.publish(MQTT_TOPIC_LOG, message, retain=True)
+            await self.mqtt.publish(
+                get_config()["mqtt_topic_log"], message, retain=True
+            )
 
 
 m = Machine()
